@@ -1,0 +1,29 @@
+# docker-compose up --build
+
+version: '3'
+networks:
+  dash-app-network:
+
+services:
+  myapp:
+    container_name: dash-app
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    environment:
+      - RUNNING_ENV=docker
+    depends_on:
+      - "dash-app-redis"
+    networks:
+      - dash-app-network
+    ports:
+      - "8080:8000"
+
+  # redis cache for storing data
+  dash-app-redis:
+    container_name: dash-app-redis
+    image: redis
+    networks:
+      - dash-app-network
+    expose:
+      - "6379"
