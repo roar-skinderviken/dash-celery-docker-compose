@@ -1,11 +1,10 @@
 import logging
 import os
-import time
 
-# import dash_bootstrap_components as dbc
+import dash
 import diskcache
 from celery import Celery
-from dash import Dash, DiskcacheManager, CeleryManager, Output, Input, callback, html
+from dash import Dash, DiskcacheManager, CeleryManager, html
 
 logger = logging.getLogger(__name__)
 
@@ -40,14 +39,12 @@ def get_app() -> Dash:
     app = Dash(
         name=__name__,
         title="Dash POC",
-        background_callback_manager=_background_callback_manager
+        background_callback_manager=_background_callback_manager,
+        use_pages=True
     )
 
     app.layout = html.Div(
-        [
-            html.Div([html.P(id="paragraph_id", children=["Button not clicked"])]),
-            html.Button(id="button_id", children="Run Job!"),
-        ]
+        dash.page_container
     )
 
     return app
@@ -63,21 +60,6 @@ def main() -> None:
         debug=True,
         port=DEFAULT_PORT
     )
-
-
-@callback(
-    Output("paragraph_id", "children"),
-    Input("button_id", "n_clicks"),
-    running=[
-        (Output("button_id", "disabled"), True, False),
-        (Output("button_id", "children"), "Running...", "Run Job!")
-    ],
-    background=True,
-    prevent_initial_call=True
-)
-def update_clicks(n_clicks):
-    time.sleep(2.0)
-    return [f"Clicked {n_clicks} times"]
 
 
 if __name__ == "__main__":
