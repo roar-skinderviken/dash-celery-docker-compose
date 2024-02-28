@@ -28,13 +28,16 @@ USER appuser
 
 # Copy virtual environment
 COPY --from=builder --chown=appuser ${VIRTUAL_ENV} ${VIRTUAL_ENV}
-RUN chmod -R a-w ${VIRTUAL_ENV}
 
 # Copy application code
 COPY src/$PACKAGE_NAME ./$PACKAGE_NAME
-COPY gunicorn.conf.py ./
+COPY --chown=appuser gunicorn.conf.py ./
 COPY --chown=appuser docker_startup_script.sh ./
-RUN chmod +x ./docker_startup_script.sh
+
+# Change permissions
+RUN chmod -R a-w ${VIRTUAL_ENV} \
+    && chmod a-w gunicorn.conf.py \
+    && chmod a-w+x ./docker_startup_script.sh
 
 # Running the application
 CMD ./docker_startup_script.sh
