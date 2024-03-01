@@ -1,0 +1,9 @@
+version: 2
+updates:
+  - package-ecosystem: pip # pip which will also work for poetry
+    directory: "/"
+    versioning-strategy: increase-if-necessary
+    schedule:
+      interval: weekly
+      time: "04:15"
+      timezone: Europe/Oslo
