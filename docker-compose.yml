@@ -11,7 +11,7 @@ services:
       context: .
       dockerfile: ./Dockerfile
     environment:
-      - RUNNING_ENV=docker
+      - REDIS_URL=redis://dash-app-redis:6379
     depends_on:
       - "dash-app-redis"
     networks:
