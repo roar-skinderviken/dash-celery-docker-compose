@@ -1,5 +1,3 @@
 """Entrypoint for Gunicorn."""
-from dash_app.app import get_app
-
-app = get_app()
+from dash_app.app import app
 server = app.server

@@ -1,82 +1,55 @@
 import logging
 import os
-import time
 
-import diskcache
-from celery import Celery
-from dash import Dash, DiskcacheManager, CeleryManager, Output, Input, callback, html
+import dash
+from dash import Dash, DiskcacheManager, CeleryManager, html
 
 logger = logging.getLogger(__name__)
 
 # some constants
 DEFAULT_PORT: int = 7002
 REDIS_HOST = "redis://dash-app-redis:6379"
-DOCKER_ENV = "docker"
 
 # get the running environment
-RUNNING_ENV = os.environ.get("RUNNING_ENV")
+REDIS_URL_ENV_VAR = "REDIS_URL"
 
-# expose the celery app only if we are running in docker
-celery_app = Celery(
-    __name__,
-    broker=f"{REDIS_HOST}/0",
-    backend=f"{REDIS_HOST}/1",
-) if RUNNING_ENV == DOCKER_ENV else None
+if REDIS_URL_ENV_VAR in os.environ:
+    # Use Redis & Celery if REDIS_URL set as an env variable
+    from celery import Celery
 
-
-def get_background_callback_manager():
-    if RUNNING_ENV == DOCKER_ENV:
-        return CeleryManager(celery_app)
-    else:
-        return DiskcacheManager(diskcache.Cache("./cache"))
-
-
-# keep the background callback manager in a global variable
-_background_callback_manager = get_background_callback_manager()
-
-
-def get_app() -> Dash:
-    app = Dash(
-        name=__name__,
-        title="Dash POC",
-        background_callback_manager=_background_callback_manager
+    celery_app = Celery(
+        __name__,
+        broker=os.environ[REDIS_URL_ENV_VAR],
+        backend=os.environ[REDIS_URL_ENV_VAR]
     )
+    background_callback_manager = CeleryManager(celery_app=celery_app)
 
-    app.layout = html.Div(
-        [
-            html.Div([html.P(id="paragraph_id", children=["Button not clicked"])]),
-            html.Button(id="button_id", children="Run Job!"),
-        ]
-    )
+else:
+    # Diskcache for non-production apps when developing locally
+    import diskcache
 
-    return app
+    cache = diskcache.Cache("./cache")
+    background_callback_manager = DiskcacheManager(cache=cache)
+
+app = Dash(
+    name=__name__,
+    title="Dash POC",
+    background_callback_manager=background_callback_manager,
+    use_pages=True
+)
+
+app.layout = html.Div(
+    dash.page_container
+)
 
 
 def main() -> None:
     logging.basicConfig(level=logging.DEBUG, force=True)
-    logger.info("Starting app")
-    app = get_app()
-
     logger.debug("Starting in development mode")
     app.run(
         debug=True,
         port=DEFAULT_PORT
     )
-
-
-@callback(
-    Output("paragraph_id", "children"),
-    Input("button_id", "n_clicks"),
-    running=[
-        (Output("button_id", "disabled"), True, False),
-        (Output("button_id", "children"), "Running...", "Run Job!")
-    ],
-    background=True,
-    prevent_initial_call=True
-)
-def update_clicks(n_clicks):
-    time.sleep(2.0)
-    return [f"Clicked {n_clicks} times"]
 
 
 if __name__ == "__main__":
