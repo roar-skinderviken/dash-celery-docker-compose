@@ -8,7 +8,6 @@ logger = logging.getLogger(__name__)
 
 # some constants
 DEFAULT_PORT: int = 7002
-REDIS_HOST = "redis://dash-app-redis:6379"
 
 # get the running environment
 REDIS_URL_ENV_VAR = "REDIS_URL"
