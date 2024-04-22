@@ -11,7 +11,7 @@ packages = [
 [tool.poetry.dependencies]
 python = ">=3.10,<3.12"
 dash = {extras = ["celery", "diskcache"], version = "^2.16.0"}
-gunicorn = "^21.2.0"
+gunicorn = "^22.0.0"
 
 
 [build-system]
